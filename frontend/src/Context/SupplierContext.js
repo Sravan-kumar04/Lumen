@@ -1,7 +1,14 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
+import { SupplierContext } from "./SupplierContext";
 
 const SupplierManagement = () => {
-  const [suppliers, setSuppliers] = useState([]);
+  const {
+    suppliers,
+    addSupplier,
+    updateSupplier,
+    deleteSupplier,
+  } = useContext(SupplierContext);
+
   const [supplier, setSupplier] = useState({
     name: "",
     contact: "",
@@ -23,32 +30,23 @@ const SupplierManagement = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-
     if (editingSupplierId) {
-      // Edit existing supplier
-      setSuppliers((prev) =>
-        prev.map((s) =>
-          s.id === editingSupplierId ? { ...supplier, id: editingSupplierId } : s
-        )
-      );
+      updateSupplier(editingSupplierId, supplier);
       setEditingSupplierId(null);
     } else {
-      // Add new supplier
-      setSuppliers([...suppliers, { ...supplier, id: Date.now() }]);
+      addSupplier(supplier);
     }
-
     setSupplier({ name: "", contact: "", email: "", address: "" });
   };
 
   const handleEdit = (id) => {
-    const supplierToEdit = suppliers.find((s) => s.id === id);
+    const supplierToEdit = suppliers.find((s) => s._id === id);
     setSupplier(supplierToEdit);
     setEditingSupplierId(id);
   };
 
   const handleDelete = (id) => {
-    setSuppliers(suppliers.filter((s) => s.id !== id));
-    // Remove associated order history
+    deleteSupplier(id);
     const updatedOrderHistory = { ...orderHistory };
     delete updatedOrderHistory[id];
     setOrderHistory(updatedOrderHistory);
@@ -70,7 +68,6 @@ const SupplierManagement = () => {
         { description: order.description, status: order.status, id: Date.now() },
       ],
     }));
-
     setOrder({ supplierId: "", description: "", status: "" });
   };
 
@@ -148,7 +145,7 @@ const SupplierManagement = () => {
             <ul className="list-group">
               {suppliers.map((s) => (
                 <li
-                  key={s.id}
+                  key={s._id}
                   className="list-group-item d-flex justify-content-between align-items-center"
                 >
                   <div>
@@ -157,13 +154,13 @@ const SupplierManagement = () => {
                   <div>
                     <button
                       className="btn btn-info btn-sm me-2"
-                      onClick={() => handleEdit(s.id)}
+                      onClick={() => handleEdit(s._id)}
                     >
                       Edit
                     </button>
                     <button
                       className="btn btn-danger btn-sm"
-                      onClick={() => handleDelete(s.id)}
+                      onClick={() => handleDelete(s._id)}
                     >
                       Delete
                     </button>
@@ -189,7 +186,7 @@ const SupplierManagement = () => {
             >
               <option value="">Select a supplier</option>
               {suppliers.map((s) => (
-                <option key={s.id} value={s.id}>
+                <option key={s._id} value={s._id}>
                   {s.name}
                 </option>
               ))}
@@ -223,44 +220,6 @@ const SupplierManagement = () => {
             Add Order
           </button>
         </form>
-      </div>
-
-      <div className="card shadow mt-4">
-        <h5 className="card-header">Order History</h5>
-        <div className="card-body">
-          {Object.keys(orderHistory).length === 0 ? (
-            <p>No orders available.</p>
-          ) : (
-            Object.keys(orderHistory).map((supplierId) => (
-              <div key={supplierId}>
-                <h6>
-                  Supplier:{" "}
-                  {
-                    suppliers.find((s) => s.id.toString() === supplierId)?.name
-                  }
-                </h6>
-                <ul className="list-group mb-3">
-                  {orderHistory[supplierId].map((o) => (
-                    <li
-                      key={o.id}
-                      className="list-group-item d-flex justify-content-between align-items-center"
-                    >
-                      <div>
-                        {o.description} - <strong>{o.status}</strong>
-                      </div>
-                      <button
-                        className="btn btn-danger btn-sm"
-                        onClick={() => handleDeleteOrder(supplierId, o.id)}
-                      >
-                        Delete
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))
-          )}
-        </div>
       </div>
     </div>
   );
